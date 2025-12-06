@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRISPay - Premium Top Up System</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="animated-bg">
+        <div class="floating-shape shape1"></div>
+        <div class="floating-shape shape2"></div>
+        <div class="floating-shape shape3"></div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box glass-card">
+            <h1>QRISPay</h1>
+            <p>Sistem Top Up Premium dengan QRIS</p>
+            <button class="google-btn" onclick="loginWithGoogle()">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Masuk dengan Google
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="container hidden">
+        <div class="header">
+            <div class="logo">QRISPay</div>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div id="userProfile" class="user-profile"></div>
+                <button class="logout-btn" onclick="logout()">Keluar</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showTab('dashboard')">Dashboard</div>
+            <div class="nav-tab" onclick="showTab('topup')">Top Up</div>
+            <div class="nav-tab" onclick="showTab('withdraw')">Withdraw</div>
+            <div class="nav-tab" onclick="showTab('history')">Riwayat</div>
+            <div class="nav-tab" id="adminTab" onclick="showTab('admin')" style="display: none;">Admin</div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboardTab" class="tab-content">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Saldo Tersedia</div>
+                    <div class="stat-value" id="userBalance">Rp 0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #00cec9, #0984e3);">
+                    <div class="stat-label">Total Top Up</div>
+                    <div class="stat-value" id="totalTopup">Rp 0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #a29bfe, #6c5ce7);">
+                    <div class="stat-label">Total Withdraw</div>
+                    <div class="stat-value" id="totalWithdraw">Rp 0</div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="margin-bottom: 20px;">Transaksi Terbaru</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Jenis</th>
+                                <th>Nominal</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTransactions">
+                            <tr><td colspan="4" style="text-align: center;">Tidak ada transaksi</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Up Tab -->
+        <div id="topupTab" class="tab-content hidden">
+            <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+                <h2 style="margin-bottom: 20px;">Top Up Saldo</h2>
+                <form id="topupForm" onsubmit="submitTopup(event)">
+                    <div class="form-group">
+                        <label>Nominal Top Up</label>
+                        <input type="number" class="form-control" id="topupAmount" placeholder="Masukkan nominal" required min="10000">
+                    </div>
+                    <div class="quick-amount">
+                        <div class="amount-btn" onclick="selectAmount(50000)">Rp 50.000</div>
+                        <div class="amount-btn" onclick="selectAmount(100000)">Rp 100.000</div>
+                        <div class="amount-btn" onclick="selectAmount(200000)">Rp 200.000</div>
+                        <div class="amount-btn" onclick="selectAmount(500000)">Rp 500.000</div>
+                        <div class="amount-btn" onclick="selectAmount(1000000)">Rp 1.000.000</div>
+                        <div class="amount-btn" onclick="selectAmount(2000000)">Rp 2.000.000</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Pengirim</label>
+                        <input type="text" class="form-control" id="senderName" placeholder="Nama Anda" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Penerima (Custom)</label>
+                        <input type="text" class="form-control" id="recipientName" placeholder="Nama penerima pada QRIS" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Catatan (Opsional)</label>
+                        <textarea class="form-control" id="topupNote" rows="3" placeholder="Catatan tambahan"></textarea>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Lanjutkan Pembayaran →</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Withdraw Tab -->
+        <div id="withdrawTab" class="tab-content hidden">
+            <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+                <h2 style="margin-bottom: 20px;">Withdraw E-Wallet</h2>
+                <form id="withdrawForm" onsubmit="submitWithdraw(event)">
+                    <div class="form-group">
+                        <label>Pilih E-Wallet</label>
+                        <div class="ewallet-grid">
+                            <div class="ewallet-btn" onclick="selectEwallet('dana')">
+                                <div style="font-size: 40px;">💙</div>
+                                <div>DANA</div>
+                            </div>
+                            <div class="ewallet-btn" onclick="selectEwallet('ovo')">
+                                <div style="font-size: 40px;">💜</div>
+                                <div>OVO</div>
+                            </div>
+                            <div class="ewallet-btn" onclick="selectEwallet('gopay')">
+                                <div style="font-size: 40px;">💚</div>
+                                <div>GoPay</div>
+                            </div>
+                            <div class="ewallet-btn" onclick="selectEwallet('shopeepay')">
+                                <div style="font-size: 40px;">🧡</div>
+                                <div>ShopeePay</div>
+                            </div>
+                            <div class="ewallet-btn" onclick="selectEwallet('linkaja')">
+                                <div style="font-size: 40px;">❤️</div>
+                                <div>LinkAja</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedEwallet" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nomor Tujuan</label>
+                        <input type="tel" class="form-control" id="withdrawPhone" placeholder="08xxxxxxxxxx" required pattern="[0-9]{10,13}">
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Penerima</label>
+                        <input type="text" class="form-control" id="withdrawName" placeholder="Nama penerima" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nominal Withdraw</label>
+                        <input type="number" class="form-control" id="withdrawAmount" placeholder="Minimal Rp 10.000" required min="10000">
+                    </div>
+                    <div class="info-box">
+                        <h4>Biaya Admin</h4>
+                        <p style="margin: 0; color: var(--text-gray);">Biaya admin: Rp <span id="adminFeeDisplay">2500</span></p>
+                        <p style="margin: 5px 0 0 0; font-weight: bold;">Total yang diterima: Rp <span id="totalReceived">0</span></p>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">Ajukan Withdraw →</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="historyTab" class="tab-content hidden">
+            <div class="glass-card">
+                <h2 style="margin-bottom: 20px;">Riwayat Transaksi</h2>
+                <div class="nav-tabs" style="margin-bottom: 20px;">
+                    <div class="nav-tab active" onclick="filterHistory('all')">Semua</div>
+                    <div class="nav-tab" onclick="filterHistory('topup')">Top Up</div>
+                    <div class="nav-tab" onclick="filterHistory('withdraw')">Withdraw</div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Referensi</th>
+                                <th>Jenis</th>
+                                <th>Nominal</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable">
+                            <tr><td colspan="6" style="text-align: center;">Tidak ada riwayat</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Tab -->
+        <div id="adminTab" class="tab-content hidden">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Pending Top Up</div>
+                    <div class="stat-value" id="pendingTopupCount">0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #a29bfe, #6c5ce7);">
+                    <div class="stat-label">Pending Withdraw</div>
+                    <div class="stat-value" id="pendingWithdrawCount">0</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #00cec9, #0984e3);">
+                    <div class="stat-label">Total Transaksi</div>
+                    <div class="stat-value" id="totalTransactions">0</div>
+                </div>
+            </div>
+
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="showAdminSection('topups')">Kelola Top Up</div>
+                <div class="nav-tab" onclick="showAdminSection('withdraws')">Kelola Withdraw</div>
+                <div class="nav-tab" onclick="showAdminSection('settings')">Pengaturan</div>
+            </div>
+
+            <!-- Admin Top Up Section -->
+            <div id="adminTopupsSection" class="glass-card">
+                <h3 style="margin-bottom: 20px;">Daftar Top Up</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>User</th>
+                                <th>Nominal</th>
+                                <th>Status</th>
+                                <th>Bukti</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTopupTable">
+                            <tr><td colspan="6" style="text-align: center;">Tidak ada data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin Withdraw Section -->
+            <div id="adminWithdrawsSection" class="glass-card hidden">
+                <h3 style="margin-bottom: 20px;">Daftar Withdraw</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>User</th>
+                                <th>E-Wallet</th>
+                                <th>Nomor</th>
+                                <th>Nominal</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminWithdrawTable">
+                            <tr><td colspan="7" style="text-align: center;">Tidak ada data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin Settings Section -->
+            <div id="adminSettingsSection" class="glass-card hidden">
+                <h3 style="margin-bottom: 20px;">Pengaturan Sistem</h3>
+                
+                <div class="admin-settings">
+                    <div class="setting-item">
+                        <div>
+                            <strong>Biaya Admin Withdraw</strong>
+                            <p style="margin: 5px 0 0 0; color: var(--text-gray); font-size: 14px;">Biaya yang dikenakan untuk setiap withdraw</p>
+                        </div>
+                        <input type="number" class="form-control" id="adminFeeInput" value="2500" onchange="updateAdminFee()" style="max-width: 150px;">
+                    </div>
+
+                    <div class="setting-item">
+                        <div>
+                            <strong>Upload QRIS Baru</strong>
+                            <p style="margin: 5px 0 0 0; color: var(--text-gray); font-size: 14px;">Gambar QRIS untuk pembayaran</p>
+                        </div>
+                        <input type="file" id="qrisUpload" accept="image/*" onchange="uploadQRIS()" class="form-control" style="max-width: 250px;">
+                    </div>
+
+                    <div class="setting-item">
+                        <div>
+                            <strong>NMID QRIS</strong>
+                            <p style="margin: 5px 0 0 0; color: var(--text-gray); font-size: 14px;">Nomor Merchant ID</p>
+                        </div>
+                        <input type="text" class="form-control" id="nmidInput" value="ID1234567890123" onchange="updateNMID()" style="max-width: 200px;">
+                    </div>
+
+                    <div class="setting-item">
+                        <div>
+                            <strong>Nama Brand</strong>
+                            <p style="margin: 5px 0 0 0; color: var(--text-gray); font-size: 14px;">Nama aplikasi/brand Anda</p>
+                        </div>
+                        <input type="text" class="form-control" id="brandInput" value="QRISPay" onchange="updateBrand()" style="max-width: 200px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detail Pembayaran</h2>
+                <span class="close-modal" onclick="closeModal('paymentModal')">&times;</span>
+            </div>
+            
+            <div class="info-box">
+                <h4>Nomor Referensi</h4>
+                <p style="font-family: monospace; font-size: 18px; font-weight: bold;" id="refNumber"></p>
+            </div>
+
+            <div class="countdown" id="countdown">14:59</div>
+            
+            <div class="qris-display">
+                <h3 style="color: #333; margin-bottom: 15px;">Scan QRIS untuk Pembayaran</h3>
+                <div class="qris-overlay">
+                    <img src="" id="qrisImage" class="qris-image" alt="QRIS">
+                    <div class="recipient-name" id="qrisRecipient"></div>
+                </div>
+                <p style="color: #666; margin-top: 15px;">NMID: <span id="qrisNMID"></span></p>
+                <p style="color: #333; font-weight: bold; font-size: 24px; margin-top: 10px;" id="paymentAmount"></p>
+            </div>
+
+            <div class="badge badge-pending" style="display: block; text-align: center; padding: 12px;">
+                🕐 Menunggu Pembayaran
+            </div>
+
+            <div class="file-upload" onclick="document.getElementById('proofUpload').click()">
+                <input type="file" id="proofUpload" accept="image/jpeg,image/png" onchange="previewProof()">
+                <p style="font-size: 48px; margin-bottom: 10px;">📸</p>
+                <p style="color: var(--text-gray);">Klik untuk upload bukti transfer</p>
+                <p style="color: var(--text-gray); font-size: 14px; margin-top: 5px;">Format: JPG, PNG (Max 5MB)</p>
+            </div>
+
+            <img id="proofPreview" class="img-preview hidden">
+
+            <button class="btn" style="width: 100%; margin-top: 15px;" onclick="submitProof()" id="submitProofBtn" disabled>
+                Upload Bukti Transfer
+            </button>
+        </div>
+    </div>
+
+    <!-- Proof View Modal -->
+    <div id="proofModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Bukti Transfer</h2>
+                <span class="close-modal" onclick="closeModal('proofModal')">&times;</span>
+            </div>
+            <img id="proofView" class="img-preview" style="width: 100%;">
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
